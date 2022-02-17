@@ -21,6 +21,9 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+
+	esv1beta1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1beta1"
+	esmeta "github.com/external-secrets/external-secrets/apis/meta/v1"
 )
 
 // MergeByteMap merges map of byte slices.
@@ -65,4 +68,30 @@ func ErrorContains(out error, want string) bool {
 		return false
 	}
 	return strings.Contains(out.Error(), want)
+}
+
+var ErrInvalidSecretKeySelector = fmt.Errorf("invalid SecretKeySelector: ClusterSecretStore requires namespace, SecretStore doesn't allow namespace")
+
+func ValidateSecretSelector(store esv1beta1.GenericStore, ref esmeta.SecretKeySelector) bool {
+	clusterScope := store.GetObjectKind().GroupVersionKind().Kind == esv1beta1.ClusterSecretStoreKind
+	if clusterScope && ref.Namespace == nil {
+		return false
+	}
+	if !clusterScope && ref.Namespace != nil {
+		return false
+	}
+	return true
+}
+
+var ErrInvalidServiceAccountSelector = fmt.Errorf("invalid ServiceAccountSelector: ClusterSecretStore requires namespace, SecretStore doesn't allow namespace")
+
+func ValidateServiceAccountSelector(store esv1beta1.GenericStore, ref esmeta.ServiceAccountSelector) bool {
+	clusterScope := store.GetObjectKind().GroupVersionKind().Kind == esv1beta1.ClusterSecretStoreKind
+	if clusterScope && ref.Namespace == nil {
+		return false
+	}
+	if !clusterScope && ref.Namespace != nil {
+		return false
+	}
+	return true
 }

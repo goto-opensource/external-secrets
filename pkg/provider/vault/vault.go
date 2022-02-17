@@ -37,13 +37,11 @@ import (
 
 	esv1beta1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1beta1"
 	esmeta "github.com/external-secrets/external-secrets/apis/meta/v1"
-	"github.com/external-secrets/external-secrets/pkg/provider"
-	"github.com/external-secrets/external-secrets/pkg/provider/schema"
 )
 
 var (
-	_ provider.Provider      = &connector{}
-	_ provider.SecretsClient = &client{}
+	_ esv1beta1.Provider      = &connector{}
+	_ esv1beta1.SecretsClient = &client{}
 )
 
 const (
@@ -101,7 +99,7 @@ type client struct {
 }
 
 func init() {
-	schema.Register(&connector{
+	esv1beta1.Register(&connector{
 		newVaultClient: newVaultClient,
 	}, &esv1beta1.SecretStoreProvider{
 		Vault: &esv1beta1.VaultProvider{},
@@ -116,7 +114,7 @@ type connector struct {
 	newVaultClient func(c *vault.Config) (Client, error)
 }
 
-func (c *connector) NewClient(ctx context.Context, store esv1beta1.GenericStore, kube kclient.Client, namespace string) (provider.SecretsClient, error) {
+func (c *connector) NewClient(ctx context.Context, store esv1beta1.GenericStore, kube kclient.Client, namespace string) (esv1beta1.SecretsClient, error) {
 	storeSpec := store.GetSpec()
 	if storeSpec == nil || storeSpec.Provider == nil || storeSpec.Provider.Vault == nil {
 		return nil, errors.New(errVaultStore)
@@ -156,6 +154,10 @@ func (c *connector) NewClient(ctx context.Context, store esv1beta1.GenericStore,
 	vStore.client = client
 
 	return vStore, nil
+}
+
+func (c *connector) ValidateStore(store esv1beta1.GenericStore) error {
+	return nil
 }
 
 // Empty GetAllSecrets.
